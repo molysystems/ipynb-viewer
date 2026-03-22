@@ -14,8 +14,6 @@ interface Props {
   onNavigate: (index: number) => void;
   onFilterChange: (f: FilterMode) => void;
   onTableModeChange: (m: TableMode) => void;
-  onToggleDark: () => void;
-  isDark: boolean;
 }
 
 export default function NavBar({
@@ -26,8 +24,6 @@ export default function NavBar({
   onNavigate,
   onFilterChange,
   onTableModeChange,
-  onToggleDark,
-  isDark,
 }: Props) {
   const [tocOpen, setTocOpen] = useState(false);
 
@@ -156,14 +152,6 @@ export default function NavBar({
             ▼
           </button>
 
-          {/* Dark mode toggle */}
-          <button
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#162040] text-base"
-            onClick={onToggleDark}
-            aria-label="Toggle dark mode"
-          >
-            {isDark ? '☀️' : '🌙'}
-          </button>
         </div>
       </nav>
     </>
