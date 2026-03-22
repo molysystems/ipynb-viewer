@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ParsedNotebook } from '@/lib/ipynb-parser';
 import CodeCell from './CodeCell';
-import MarkdownCell from './MarkdownCell';
+import MarkdownCell, { type TableMode } from './MarkdownCell';
 import RawCell from './RawCell';
 import ImageModal from './ImageModal';
 import NavBar, { type FilterMode } from './NavBar';
@@ -17,18 +17,9 @@ interface Props {
 export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [filter, setFilter] = useState<FilterMode>('all');
+  const [tableMode, setTableMode] = useState<TableMode>('wrap');
   const [modalSrc, setModalSrc] = useState<string | null>(null);
   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  const filteredIndices = notebook.cells
-    .map((c, i) => ({ cell: c, index: i }))
-    .filter(({ cell }) => {
-      if (filter === 'all') return true;
-      if (filter === 'code') return cell.cellType === 'code';
-      if (filter === 'markdown') return cell.cellType === 'markdown';
-      if (filter === 'output') return cell.cellType === 'code' && cell.outputs.length > 0;
-      return true;
-    });
 
   const navigateTo = useCallback((index: number) => {
     setCurrentIndex(index);
@@ -44,14 +35,9 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
       if (!el) return;
       const obs = new IntersectionObserver(
         ([entry]) => {
-          if (entry.isIntersecting) {
-            visible.add(i);
-          } else {
-            visible.delete(i);
-          }
-          if (visible.size > 0) {
-            setCurrentIndex(Math.min(...visible));
-          }
+          if (entry.isIntersecting) visible.add(i);
+          else visible.delete(i);
+          if (visible.size > 0) setCurrentIndex(Math.min(...visible));
         },
         { threshold: 0.3 }
       );
@@ -64,9 +50,9 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
 
   return (
     <div className="pb-20">
-      {/* Notebook header */}
+      {/* Kernel info */}
       {notebook.metadata.kernelName && (
-        <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
+        <div className="px-4 py-1.5 text-xs text-gray-400 dark:text-[#8896b0] border-b border-gray-100 dark:border-[#1e2a4a]">
           Kernel: {notebook.metadata.kernelName}
           {notebook.metadata.language && ` · ${notebook.metadata.language}`}
         </div>
@@ -96,7 +82,9 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
                   onImageClick={setModalSrc}
                 />
               )}
-              {cell.cellType === 'markdown' && <MarkdownCell cell={cell} />}
+              {cell.cellType === 'markdown' && (
+                <MarkdownCell cell={cell} tableMode={tableMode} />
+              )}
               {cell.cellType === 'raw' && <RawCell cell={cell} />}
             </div>
           );
@@ -107,8 +95,10 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
         cells={notebook.cells}
         currentIndex={currentIndex}
         filter={filter}
+        tableMode={tableMode}
         onNavigate={navigateTo}
         onFilterChange={setFilter}
+        onTableModeChange={setTableMode}
         onToggleDark={onToggleDark}
         isDark={isDark}
       />

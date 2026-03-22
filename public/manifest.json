@@ -1,11 +1,11 @@
 {
-  "name": "Notebook Viewer",
-  "short_name": "NB Viewer",
-  "description": "Android向けJupyter Notebookビューア",
+  "name": "Read.ipynb",
+  "short_name": "Read.ipynb",
+  "description": "Jupyter Notebook viewer for Android",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "background_color": "#0a0e1a",
+  "theme_color": "#4d9fff",
   "orientation": "portrait",
   "icons": [
     {

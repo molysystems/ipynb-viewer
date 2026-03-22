@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { NotebookCell } from '@/lib/ipynb-parser';
+import type { TableMode } from './MarkdownCell';
 
 export type FilterMode = 'all' | 'code' | 'markdown' | 'output';
 
@@ -9,8 +10,10 @@ interface Props {
   cells: NotebookCell[];
   currentIndex: number;
   filter: FilterMode;
+  tableMode: TableMode;
   onNavigate: (index: number) => void;
   onFilterChange: (f: FilterMode) => void;
+  onTableModeChange: (m: TableMode) => void;
   onToggleDark: () => void;
   isDark: boolean;
 }
@@ -19,8 +22,10 @@ export default function NavBar({
   cells,
   currentIndex,
   filter,
+  tableMode,
   onNavigate,
   onFilterChange,
+  onTableModeChange,
   onToggleDark,
   isDark,
 }: Props) {
@@ -52,6 +57,10 @@ export default function NavBar({
     { label: 'Out', value: 'output' },
   ];
 
+  const chipBase = 'px-2 py-1 rounded-full text-xs font-medium transition-colors';
+  const chipActive = 'bg-[#4d9fff] text-white';
+  const chipInactive = 'bg-gray-100 dark:bg-[#162040] text-gray-600 dark:text-[#8896b0]';
+
   return (
     <>
       {/* TOC Overlay */}
@@ -61,30 +70,29 @@ export default function NavBar({
           onClick={() => setTocOpen(false)}
         >
           <div
-            className="absolute bottom-20 left-2 right-2 max-h-72 overflow-y-auto rounded-xl bg-white dark:bg-gray-900 shadow-2xl"
+            className="absolute bottom-20 left-2 right-2 max-h-72 overflow-y-auto rounded-xl bg-white dark:bg-[#0f1628] shadow-2xl border border-gray-200 dark:border-[#1e2a4a]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white dark:bg-gray-900 px-4 py-2 border-b border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <div className="sticky top-0 bg-white dark:bg-[#0f1628] px-4 py-2 border-b border-gray-200 dark:border-[#1e2a4a] text-sm font-semibold text-gray-700 dark:text-[#e0e8f8]">
               Cells ({cells.length})
             </div>
             {filteredIndices.map(({ cell, index }) => (
               <button
                 key={index}
-                className={`w-full text-left px-4 py-2.5 text-sm border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                  index === currentIndex ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'
+                className={`w-full text-left px-4 py-2.5 text-sm border-b border-gray-100 dark:border-[#1e2a4a] hover:bg-gray-50 dark:hover:bg-[#162040] ${
+                  index === currentIndex
+                    ? 'bg-blue-50 dark:bg-[#162040] text-[#4d9fff]'
+                    : 'text-gray-700 dark:text-[#e0e8f8]'
                 }`}
-                onClick={() => {
-                  onNavigate(index);
-                  setTocOpen(false);
-                }}
+                onClick={() => { onNavigate(index); setTocOpen(false); }}
               >
-                <span className="font-mono text-xs text-gray-400 mr-2">[{index + 1}]</span>
+                <span className="font-mono text-xs text-gray-400 dark:text-[#8896b0] mr-2">[{index + 1}]</span>
                 <span className={`inline-block px-1.5 py-0.5 rounded text-xs mr-2 ${
                   cell.cellType === 'code'
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                    ? 'bg-blue-100 dark:bg-[#162040] text-blue-700 dark:text-[#4d9fff]'
                     : cell.cellType === 'markdown'
-                    ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                    ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400'
+                    : 'bg-gray-100 dark:bg-[#162040] text-gray-600 dark:text-[#8896b0]'
                 }`}>
                   {cell.cellType}
                 </span>
@@ -96,18 +104,14 @@ export default function NavBar({
       )}
 
       {/* NavBar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-t border-gray-200 dark:border-gray-700 px-3 py-2 safe-area-bottom">
-        <div className="flex items-center gap-2 max-w-3xl mx-auto">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-[#0f1628]/95 backdrop-blur border-t border-gray-200 dark:border-[#1e2a4a] px-3 py-2 safe-area-bottom">
+        <div className="flex items-center gap-1.5 max-w-3xl mx-auto">
           {/* Filter chips */}
           <div className="flex gap-1">
             {filters.map((f) => (
               <button
                 key={f.value}
-                className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                  filter === f.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                }`}
+                className={`${chipBase} ${filter === f.value ? chipActive : chipInactive}`}
                 onClick={() => onFilterChange(f.value)}
               >
                 {f.label}
@@ -115,11 +119,20 @@ export default function NavBar({
             ))}
           </div>
 
+          {/* Table mode toggle */}
+          <button
+            className={`${chipBase} ${chipInactive} border border-gray-200 dark:border-[#1e2a4a]`}
+            onClick={() => onTableModeChange(tableMode === 'wrap' ? 'scroll' : 'wrap')}
+            title={tableMode === 'wrap' ? 'Switch to table scroll mode' : 'Switch to table wrap mode'}
+          >
+            {tableMode === 'wrap' ? '⇔' : '↵'}
+          </button>
+
           <div className="flex-1" />
 
           {/* Navigation */}
           <button
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#162040] disabled:opacity-30 text-gray-700 dark:text-[#e0e8f8]"
             onClick={() => navigate(-1)}
             disabled={currentFiltered <= 0}
             aria-label="Previous cell"
@@ -128,14 +141,14 @@ export default function NavBar({
           </button>
 
           <button
-            className="px-2 py-1 text-xs font-mono text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+            className="px-2 py-1 text-xs font-mono text-gray-500 dark:text-[#8896b0] hover:bg-gray-100 dark:hover:bg-[#162040] rounded"
             onClick={() => setTocOpen(!tocOpen)}
           >
             {currentIndex + 1}/{cells.length}
           </button>
 
           <button
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#162040] disabled:opacity-30 text-gray-700 dark:text-[#e0e8f8]"
             onClick={() => navigate(1)}
             disabled={currentFiltered >= filteredIndices.length - 1}
             aria-label="Next cell"
@@ -145,7 +158,7 @@ export default function NavBar({
 
           {/* Dark mode toggle */}
           <button
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-lg"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#162040] text-base"
             onClick={onToggleDark}
             aria-label="Toggle dark mode"
           >

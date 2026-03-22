@@ -24,10 +24,10 @@ export default function CodeCell({ cell, language, onImageClick }: Props) {
   const lang = language ?? 'python';
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="rounded-lg border border-gray-200 dark:border-[#1e2a4a] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 font-mono">
-        <span className="text-blue-600 dark:text-blue-400">
+      <div className="flex items-center gap-2 bg-gray-100 dark:bg-[#080c16] px-3 py-1.5 text-xs font-mono text-gray-500 dark:text-[#8896b0]">
+        <span className="text-blue-500 dark:text-[#4d9fff]">
           In [{cell.executionCount ?? ' '}]:
         </span>
       </div>
@@ -43,16 +43,12 @@ export default function CodeCell({ cell, language, onImageClick }: Props) {
 
       {/* Outputs */}
       {cell.outputs.length > 0 && (
-        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2">
-          <div className="text-xs text-gray-400 dark:text-gray-500 font-mono mb-1">
+        <div className="border-t border-gray-200 dark:border-[#1e2a4a] bg-white dark:bg-[#0a0e1a] px-3 py-2">
+          <div className="text-xs text-gray-400 dark:text-[#8896b0] font-mono mb-1">
             Out [{cell.executionCount ?? ' '}]:
           </div>
           {cell.outputs.map((output, i) => (
-            <OutputRenderer
-              key={i}
-              output={output}
-              onImageClick={onImageClick}
-            />
+            <OutputRenderer key={i} output={output} onImageClick={onImageClick} />
           ))}
         </div>
       )}

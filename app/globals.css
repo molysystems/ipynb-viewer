@@ -15,8 +15,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #030712;
-    --foreground: #f9fafb;
+    --background: #0a0e1a;
+    --foreground: #e0e8f8;
   }
 }
 
@@ -25,13 +25,78 @@ body {
   color: var(--foreground);
 }
 
-/* highlight.js dark theme override */
+/* highlight.js dark theme */
 .dark .hljs {
-  background: #1e1e2e;
+  background: #080c16;
   color: #cdd6f4;
 }
 
 /* Safe area for mobile bottom nav */
 .safe-area-bottom {
   padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+}
+
+/* ── Markdown table styles ─────────────────────────────── */
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid #d1d5db; /* gray-300 */
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.markdown-body th {
+  background: #f3f4f6; /* gray-100 */
+  font-weight: 600;
+}
+
+.markdown-body tr:nth-child(even) td {
+  background: #f9fafb; /* gray-50 */
+}
+
+/* Dark mode table borders — explicit override */
+.dark .markdown-body th,
+.dark .markdown-body td {
+  border-color: #1e2a4a;
+}
+
+.dark .markdown-body th {
+  background: #162040;
+  color: #e0e8f8;
+}
+
+.dark .markdown-body tr:nth-child(even) td {
+  background: #0f1628;
+}
+
+.dark .markdown-body td {
+  color: #e0e8f8;
+}
+
+/* Table scroll mode: no wrap, horizontal scroll */
+.table-scroll-mode table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.table-scroll-mode .prose :where(table):not(:where([class~="not-prose"] *)) {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.table-scroll-mode td,
+.table-scroll-mode th {
+  white-space: nowrap;
+}
+
+/* Table wrap mode: normal wrapping */
+.table-wrap-mode td,
+.table-wrap-mode th {
+  white-space: normal;
 }
