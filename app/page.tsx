@@ -94,7 +94,7 @@ export default function Home() {
         {/* Fixed header — always visible, GPU-composited layer */}
         <header
           className="fixed top-0 left-0 right-0 z-20 flex items-center gap-3 px-3 py-2.5 border-b border-gray-200 dark:border-[#1e2a4a] bg-white dark:bg-[#0f1628]"
-          style={{ transform: 'translateZ(0)' }}
+          style={{ transform: 'translateZ(0)', willChange: 'transform' }}
         >
           <button
             className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-[#162040] text-gray-700 dark:text-[#e0e8f8] hover:bg-gray-200 dark:hover:bg-[#1e2a4a] transition-colors"

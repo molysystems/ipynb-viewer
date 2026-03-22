@@ -21,23 +21,37 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
   const [modalSrc, setModalSrc] = useState<string | null>(null);
   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Scroll anchor: capture before state change, restore after layout
+  // Scroll anchor: use the topmost visible cell container as anchor.
+  // Cell containers are stable — they don't shrink/grow themselves, only their
+  // children (tables) do. This avoids the "anchor inside a changing table" bug.
   const scrollAnchorRef = useRef<{ element: Element; top: number } | null>(null);
 
   function handleTableModeChange(mode: TableMode) {
-    // Capture an anchor element just below the fixed header
     const headerHeight = document.querySelector('header')?.offsetHeight ?? 52;
-    const anchor = document.elementFromPoint(window.innerWidth / 2, headerHeight + 4);
-    if (anchor && anchor !== document.documentElement && anchor !== document.body) {
-      scrollAnchorRef.current = {
-        element: anchor,
-        top: anchor.getBoundingClientRect().top,
-      };
+
+    // Find the first cell whose bottom edge is below the header
+    // (= first cell that has any visible content in the viewport)
+    let anchorEl: Element | null = null;
+    let anchorTop = 0;
+    for (const el of cellRefs.current) {
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.bottom > headerHeight) {
+        anchorEl = el;
+        anchorTop = rect.top;
+        break;
+      }
     }
+
+    if (anchorEl) {
+      scrollAnchorRef.current = { element: anchorEl, top: anchorTop };
+    }
+
     setTableMode(mode);
   }
 
-  // Runs synchronously after DOM mutations, before paint
+  // Runs synchronously after every DOM update, before paint.
+  // Only acts when scrollAnchorRef is set (i.e. after a table mode change).
   useLayoutEffect(() => {
     const anchor = scrollAnchorRef.current;
     if (!anchor) return;
@@ -79,7 +93,6 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
 
   return (
     <div className="pb-20">
-      {/* Kernel info */}
       {notebook.metadata.kernelName && (
         <div className="px-4 py-1.5 text-xs text-gray-400 dark:text-[#8896b0] border-b border-gray-100 dark:border-[#1e2a4a]">
           Kernel: {notebook.metadata.kernelName}
@@ -87,7 +100,6 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
         </div>
       )}
 
-      {/* Cells */}
       <div className="px-3 py-3 space-y-3">
         {notebook.cells.map((cell, index) => {
           const isFiltered =

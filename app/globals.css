@@ -25,6 +25,11 @@ body {
   color: var(--foreground);
 }
 
+/* Disable browser scroll anchoring — JS handles it instead */
+html {
+  overflow-anchor: none;
+}
+
 /* highlight.js dark theme */
 .dark .hljs {
   background: #080c16;
