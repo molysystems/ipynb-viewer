@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ParsedNotebook } from '@/lib/ipynb-parser';
 import CodeCell from './CodeCell';
 import MarkdownCell, { type TableMode } from './MarkdownCell';
@@ -20,6 +20,35 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
   const [tableMode, setTableMode] = useState<TableMode>('wrap');
   const [modalSrc, setModalSrc] = useState<string | null>(null);
   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Scroll anchor: capture before state change, restore after layout
+  const scrollAnchorRef = useRef<{ element: Element; top: number } | null>(null);
+
+  function handleTableModeChange(mode: TableMode) {
+    // Capture an anchor element just below the fixed header
+    const headerHeight = document.querySelector('header')?.offsetHeight ?? 52;
+    const anchor = document.elementFromPoint(window.innerWidth / 2, headerHeight + 4);
+    if (anchor && anchor !== document.documentElement && anchor !== document.body) {
+      scrollAnchorRef.current = {
+        element: anchor,
+        top: anchor.getBoundingClientRect().top,
+      };
+    }
+    setTableMode(mode);
+  }
+
+  // Runs synchronously after DOM mutations, before paint
+  useLayoutEffect(() => {
+    const anchor = scrollAnchorRef.current;
+    if (!anchor) return;
+    scrollAnchorRef.current = null;
+
+    const newTop = anchor.element.getBoundingClientRect().top;
+    const delta = newTop - anchor.top;
+    if (Math.abs(delta) > 1) {
+      window.scrollBy({ top: delta, behavior: 'instant' });
+    }
+  });
 
   const navigateTo = useCallback((index: number) => {
     setCurrentIndex(index);
@@ -98,7 +127,7 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
         tableMode={tableMode}
         onNavigate={navigateTo}
         onFilterChange={setFilter}
-        onTableModeChange={setTableMode}
+        onTableModeChange={handleTableModeChange}
         onToggleDark={onToggleDark}
         isDark={isDark}
       />

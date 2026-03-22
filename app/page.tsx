@@ -77,7 +77,6 @@ export default function Home() {
     e.preventDefault();
   }
 
-  // Hidden file input always present
   const fileInput = (
     <input
       ref={fileInputRef}
@@ -92,8 +91,11 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-white dark:bg-[#0a0e1a] text-gray-900 dark:text-[#e0e8f8]">
         {fileInput}
-        {/* Header — same style as Read.md */}
-        <header className="sticky top-0 z-20 flex items-center gap-3 px-3 py-2.5 border-b border-gray-200 dark:border-[#1e2a4a] bg-white dark:bg-[#0f1628]">
+        {/* Fixed header — always visible, GPU-composited layer */}
+        <header
+          className="fixed top-0 left-0 right-0 z-20 flex items-center gap-3 px-3 py-2.5 border-b border-gray-200 dark:border-[#1e2a4a] bg-white dark:bg-[#0f1628]"
+          style={{ transform: 'translateZ(0)' }}
+        >
           <button
             className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-[#162040] text-gray-700 dark:text-[#e0e8f8] hover:bg-gray-200 dark:hover:bg-[#1e2a4a] transition-colors"
             onClick={() => fileInputRef.current?.click()}
@@ -112,12 +114,14 @@ export default function Home() {
           </button>
         </header>
 
-        <NotebookViewer notebook={notebook} isDark={isDark} onToggleDark={toggleDark} />
+        {/* Spacer to push content below fixed header */}
+        <div className="pt-[52px]">
+          <NotebookViewer notebook={notebook} isDark={isDark} onToggleDark={toggleDark} />
+        </div>
       </div>
     );
   }
 
-  // Waiting state (shown briefly while file picker opens)
   return (
     <div
       className="min-h-screen bg-gray-50 dark:bg-[#0a0e1a] flex flex-col items-center justify-center p-6"
