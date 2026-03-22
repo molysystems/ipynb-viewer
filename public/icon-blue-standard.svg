@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" fill="#4d9fff" rx="80"/>
+  <polygon points="512,58 966,512 512,966 58,512" fill="white"/>
+  <text x="512" y="512"
+    font-family="'Helvetica Neue', Arial, sans-serif"
+    font-weight="800"
+    font-size="185"
+    fill="#4d9fff"
+    text-anchor="middle"
+    dominant-baseline="central">.ipynb</text>
+</svg>
