@@ -106,7 +106,7 @@ export default function Home() {
     return (
       // h-dvh: dynamic viewport height (accounts for mobile browser chrome)
       // flex col: header + scroll area + navbar stack naturally, no fixed positioning needed
-      <div className="flex flex-col bg-white dark:bg-[#0a0e1a] text-gray-900 dark:text-[#e0e8f8]" style={{ position: 'fixed', inset: 0 }}>
+      <div className="flex flex-col overflow-hidden bg-white dark:bg-[#0a0e1a] text-gray-900 dark:text-[#e0e8f8]" style={{ position: 'fixed', inset: 0 }}>
         {fileInput}
 
         {/* Header — plain flex item, always visible */}
@@ -130,7 +130,7 @@ export default function Home() {
         </header>
 
         {/* Scrollable content area */}
-        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+        <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto">
           <NotebookViewer
             ref={viewerRef}
             notebook={notebook}
