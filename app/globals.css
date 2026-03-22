@@ -30,6 +30,14 @@ html {
   overflow-anchor: none;
 }
 
+/* KaTeX dark mode */
+.dark .katex {
+  color: #e0e8f8;
+}
+.dark .katex-display {
+  color: #e0e8f8;
+}
+
 /* highlight.js dark theme */
 .dark .hljs {
   background: #080c16;

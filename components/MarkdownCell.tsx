@@ -2,6 +2,9 @@
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { useEffect, useRef } from 'react';
 import hljs from 'highlight.js';
 import type { NotebookCell } from '@/lib/ipynb-parser';
@@ -38,7 +41,7 @@ export default function MarkdownCell({ cell, tableMode }: Props) {
         prose-pre:bg-gray-900 prose-pre:rounded-lg prose-pre:overflow-x-auto
         ${tableMode === 'scroll' ? 'table-scroll-mode' : 'table-wrap-mode'}`}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
         {cell.source}
       </ReactMarkdown>
     </div>
