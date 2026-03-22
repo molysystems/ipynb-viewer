@@ -28,7 +28,7 @@
       "files": [
         {
           "name": "notebook",
-          "accept": ["application/x-ipynb+json", ".ipynb"]
+          "accept": ["application/x-ipynb+json"]
         }
       ]
     }
