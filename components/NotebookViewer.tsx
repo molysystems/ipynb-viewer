@@ -1,57 +1,56 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import type { ParsedNotebook } from '@/lib/ipynb-parser';
+import type { FilterMode } from './NavBar';
+import type { TableMode } from './MarkdownCell';
 import CodeCell from './CodeCell';
-import MarkdownCell, { type TableMode } from './MarkdownCell';
+import MarkdownCell from './MarkdownCell';
 import RawCell from './RawCell';
 import ImageModal from './ImageModal';
-import NavBar, { type FilterMode } from './NavBar';
 
 interface Props {
   notebook: ParsedNotebook;
   isDark: boolean;
-  onToggleDark: () => void;
+  filter: FilterMode;
+  tableMode: TableMode;
+  currentIndex: number;
+  onCurrentIndexChange: (i: number) => void;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [filter, setFilter] = useState<FilterMode>('all');
-  const [tableMode, setTableMode] = useState<TableMode>('wrap');
+export interface NotebookViewerHandle {
+  navigateTo: (index: number) => void;
+  captureScrollAnchor: () => void;
+}
+
+const NotebookViewer = forwardRef<NotebookViewerHandle, Props>(function NotebookViewer(
+  { notebook, isDark, filter, tableMode, currentIndex, onCurrentIndexChange, scrollContainerRef },
+  ref,
+) {
   const [modalSrc, setModalSrc] = useState<string | null>(null);
   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  // Scroll anchor: use the topmost visible cell container as anchor.
-  // Cell containers are stable — they don't shrink/grow themselves, only their
-  // children (tables) do. This avoids the "anchor inside a changing table" bug.
   const scrollAnchorRef = useRef<{ element: Element; top: number } | null>(null);
 
-  function handleTableModeChange(mode: TableMode) {
-    const headerHeight = document.querySelector('header')?.offsetHeight ?? 52;
-
-    // Find the first cell whose bottom edge is below the header
-    // (= first cell that has any visible content in the viewport)
-    let anchorEl: Element | null = null;
-    let anchorTop = 0;
-    for (const el of cellRefs.current) {
-      if (!el) continue;
-      const rect = el.getBoundingClientRect();
-      if (rect.bottom > headerHeight) {
-        anchorEl = el;
-        anchorTop = rect.top;
-        break;
+  useImperativeHandle(ref, () => ({
+    navigateTo(index: number) {
+      onCurrentIndexChange(index);
+      cellRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    captureScrollAnchor() {
+      const containerTop = scrollContainerRef.current?.getBoundingClientRect().top ?? 0;
+      for (const el of cellRefs.current) {
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.bottom > containerTop) {
+          scrollAnchorRef.current = { element: el, top: rect.top };
+          break;
+        }
       }
-    }
+    },
+  }));
 
-    if (anchorEl) {
-      scrollAnchorRef.current = { element: anchorEl, top: anchorTop };
-    }
-
-    setTableMode(mode);
-  }
-
-  // Runs synchronously after every DOM update, before paint.
-  // Only acts when scrollAnchorRef is set (i.e. after a table mode change).
+  // Correct scroll position after tableMode change, before paint
   useLayoutEffect(() => {
     const anchor = scrollAnchorRef.current;
     if (!anchor) return;
@@ -60,17 +59,18 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
     const newTop = anchor.element.getBoundingClientRect().top;
     const delta = newTop - anchor.top;
     if (Math.abs(delta) > 1) {
-      window.scrollBy({ top: delta, behavior: 'instant' });
+      scrollContainerRef.current?.scrollBy({ top: delta, behavior: 'instant' });
     }
   });
 
   const navigateTo = useCallback((index: number) => {
-    setCurrentIndex(index);
+    onCurrentIndexChange(index);
     cellRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
+  }, [onCurrentIndexChange]);
 
   // Track visible cell via IntersectionObserver
   useEffect(() => {
+    const container = scrollContainerRef.current;
     const observers: IntersectionObserver[] = [];
     const visible = new Set<number>();
 
@@ -80,19 +80,19 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
         ([entry]) => {
           if (entry.isIntersecting) visible.add(i);
           else visible.delete(i);
-          if (visible.size > 0) setCurrentIndex(Math.min(...visible));
+          if (visible.size > 0) onCurrentIndexChange(Math.min(...visible));
         },
-        { threshold: 0.3 }
+        { root: container, threshold: 0.3 },
       );
       obs.observe(el);
       observers.push(obs);
     });
 
     return () => observers.forEach((o) => o.disconnect());
-  }, [notebook.cells]);
+  }, [notebook.cells, scrollContainerRef, onCurrentIndexChange]);
 
   return (
-    <div className="pb-20">
+    <div>
       {notebook.metadata.kernelName && (
         <div className="px-4 py-1.5 text-xs text-gray-400 dark:text-[#8896b0] border-b border-gray-100 dark:border-[#1e2a4a]">
           Kernel: {notebook.metadata.kernelName}
@@ -132,21 +132,11 @@ export default function NotebookViewer({ notebook, isDark, onToggleDark }: Props
         })}
       </div>
 
-      <NavBar
-        cells={notebook.cells}
-        currentIndex={currentIndex}
-        filter={filter}
-        tableMode={tableMode}
-        onNavigate={navigateTo}
-        onFilterChange={setFilter}
-        onTableModeChange={handleTableModeChange}
-        onToggleDark={onToggleDark}
-        isDark={isDark}
-      />
-
       {modalSrc && (
         <ImageModal src={modalSrc} onClose={() => setModalSrc(null)} />
       )}
     </div>
   );
-}
+});
+
+export default NotebookViewer;

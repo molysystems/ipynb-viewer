@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { parseNotebook, type ParsedNotebook } from '@/lib/ipynb-parser';
-import NotebookViewer from '@/components/NotebookViewer';
+import NotebookViewer, { type NotebookViewerHandle } from '@/components/NotebookViewer';
+import NavBar, { type FilterMode } from '@/components/NavBar';
+import type { TableMode } from '@/components/MarkdownCell';
 
 type DarkMode = 'system' | 'dark' | 'light';
 
@@ -16,7 +18,12 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [darkPref, setDarkPref] = useState<DarkMode>('system');
   const [systemDark, setSystemDark] = useState(false);
+  const [filter, setFilter] = useState<FilterMode>('all');
+  const [tableMode, setTableMode] = useState<TableMode>('wrap');
+  const [currentIndex, setCurrentIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<NotebookViewerHandle>(null);
 
   useEffect(() => {
     setSystemDark(getSystemDark());
@@ -49,6 +56,9 @@ export default function Home() {
   const loadFile = useCallback((file: File) => {
     setError(null);
     setFileName(file.name.replace(/\.ipynb$/i, ''));
+    setFilter('all');
+    setTableMode('wrap');
+    setCurrentIndex(0);
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -77,6 +87,11 @@ export default function Home() {
     e.preventDefault();
   }
 
+  function handleTableModeChange(mode: TableMode) {
+    viewerRef.current?.captureScrollAnchor();
+    setTableMode(mode);
+  }
+
   const fileInput = (
     <input
       ref={fileInputRef}
@@ -89,13 +104,13 @@ export default function Home() {
 
   if (notebook) {
     return (
-      <div className="min-h-screen bg-white dark:bg-[#0a0e1a] text-gray-900 dark:text-[#e0e8f8]">
+      // h-dvh: dynamic viewport height (accounts for mobile browser chrome)
+      // flex col: header + scroll area + navbar stack naturally, no fixed positioning needed
+      <div className="flex flex-col bg-white dark:bg-[#0a0e1a] text-gray-900 dark:text-[#e0e8f8]" style={{ position: 'fixed', inset: 0 }}>
         {fileInput}
-        {/* Fixed header — always visible, GPU-composited layer */}
-        <header
-          className="fixed top-0 left-0 right-0 z-20 flex items-center gap-3 px-3 py-2.5 border-b border-gray-200 dark:border-[#1e2a4a] bg-white dark:bg-[#0f1628]"
-          style={{ transform: 'translateZ(0)', willChange: 'transform' }}
-        >
+
+        {/* Header — plain flex item, always visible */}
+        <header className="shrink-0 flex items-center gap-3 px-3 py-2.5 border-b border-gray-200 dark:border-[#1e2a4a] bg-white dark:bg-[#0f1628]">
           <button
             className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-[#162040] text-gray-700 dark:text-[#e0e8f8] hover:bg-gray-200 dark:hover:bg-[#1e2a4a] transition-colors"
             onClick={() => fileInputRef.current?.click()}
@@ -114,10 +129,32 @@ export default function Home() {
           </button>
         </header>
 
-        {/* Spacer to push content below fixed header */}
-        <div className="pt-[52px]">
-          <NotebookViewer notebook={notebook} isDark={isDark} onToggleDark={toggleDark} />
+        {/* Scrollable content area */}
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+          <NotebookViewer
+            ref={viewerRef}
+            notebook={notebook}
+            isDark={isDark}
+            filter={filter}
+            tableMode={tableMode}
+            currentIndex={currentIndex}
+            onCurrentIndexChange={setCurrentIndex}
+            scrollContainerRef={scrollContainerRef}
+          />
         </div>
+
+        {/* NavBar — plain flex item, always visible */}
+        <NavBar
+          cells={notebook.cells}
+          currentIndex={currentIndex}
+          filter={filter}
+          tableMode={tableMode}
+          onNavigate={(i) => viewerRef.current?.navigateTo(i)}
+          onFilterChange={setFilter}
+          onTableModeChange={handleTableModeChange}
+          onToggleDark={toggleDark}
+          isDark={isDark}
+        />
       </div>
     );
   }

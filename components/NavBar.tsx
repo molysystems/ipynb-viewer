@@ -103,11 +103,8 @@ export default function NavBar({
         </div>
       )}
 
-      {/* NavBar — solid bg + translateZ(0) to stay always visible */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[#0f1628] border-t border-gray-200 dark:border-[#1e2a4a] px-3 py-2 safe-area-bottom"
-        style={{ transform: 'translateZ(0)', willChange: 'transform' }}
-      >
+      {/* NavBar — rendered as normal flex item, no fixed positioning needed */}
+      <nav className="bg-white dark:bg-[#0f1628] border-t border-gray-200 dark:border-[#1e2a4a] px-3 py-2 safe-area-bottom shrink-0">
         <div className="flex items-center gap-1.5 max-w-3xl mx-auto">
           {/* Filter chips */}
           <div className="flex gap-1">
